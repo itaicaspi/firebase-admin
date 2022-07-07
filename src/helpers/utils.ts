@@ -74,6 +74,13 @@ export const getDeepObjectPropByPath = (object: any, path: string) : any => {
 //   return JSON.stringify(obj, allKeys, space);
 // }
 
+export const getCollectionPathFromPath = (path: string) => {
+  if (path.startsWith("/")) path = path.slice(1)
+  const pathComponents = path.split("/")
+  const collectionPartIndex = Math.floor((pathComponents.length - 1) / 2) * 2
+  return pathComponents.slice(0, collectionPartIndex + 1).join("/")
+}
+
 export const getCollectionIdFromPath = (path: string) => {
   if (path.startsWith("/")) path = path.slice(1)
   const pathComponents = path.split("/")

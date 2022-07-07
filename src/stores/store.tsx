@@ -1,7 +1,12 @@
 import create, {GetState, SetState, State} from "zustand";
 import {db, functions} from "../firebase";
 import {addDoc, collection, deleteDoc, doc, onSnapshot, setDoc,} from "firebase/firestore";
-import {getCollectionIdFromPath, getDocIdFromPath, replaceTimestamps} from "../helpers/utils";
+import {
+  getCollectionIdFromPath,
+  getCollectionPathFromPath,
+  getDocIdFromPath,
+  replaceTimestamps
+} from "../helpers/utils";
 import {toast} from "react-hot-toast";
 import {httpsCallable} from "firebase/functions";
 import {cloneDoc, fetchCollections, removeDoc, renameDoc} from "../helpers/firebaseFunctions";
@@ -70,13 +75,18 @@ const useStore = create((
   },
   currentPath: "",
   setCurrentPath: async (currentPath: string) : Promise<string> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       // get root collections
       const pathComponents = currentPath.split("/");
       if (get().currentParentCollections.length === 0) {
-        fetchCollections("").then((result) => {
-          set({currentParentCollections: [result]})
-        })
+        // fetch all the subcollections along the current path
+        let parentCollections = [];
+        for (let i = 0; i < pathComponents.length; i += 2) {
+          let docPath = pathComponents.slice(0, i).join("/");
+          let subCollections = await fetchCollections(docPath)
+          parentCollections.push(subCollections)
+        }
+        set({currentParentCollections: parentCollections});
       } else {
         // update parent collections
         const requiredCollectionDepth = Math.max(1, Math.ceil(pathComponents.length / 2));
@@ -281,7 +291,7 @@ const useStore = create((
     ).then(() => {
       // at this point, the collection should already update automatically
       // navigate to the new path
-      get().setCurrentPath([getCollectionIdFromPath(get().currentPath), toDocId].join("/"))
+      get().setCurrentPath([getCollectionPathFromPath(get().currentPath), toDocId].join("/"))
       delete newCollection[fromDocId];
       get().setCurrentCollection(newCollection)
     })

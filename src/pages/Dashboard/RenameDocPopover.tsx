@@ -1,4 +1,4 @@
-import React, {FunctionComponent, useState} from 'react';
+import React, {FunctionComponent, useEffect, useState} from 'react';
 import useStore from "../../stores/store";
 import {getDocIdFromPath} from "../../helpers/utils";
 
@@ -19,12 +19,17 @@ const RenameDocPopover: FunctionComponent<Props> = (props) => {
     setToDocId(newDocId);
     if (newDocId === "") {
       setError("Document id must not be empty");
+    } else if (newDocId === props.docId) {
+      setError("Document id must be different from its current id");
     } else if (Object.keys(currentCollection).includes(newDocId)) {
       setError("Document id already exists in the collection");
     } else {
       setError(undefined)
     }
   }
+
+  useEffect(() => handleSetToDocId(props.docId), [])
+
   return (
     <div className="bg-white py-4 flex flex-col gap-4">
       <div className="bg-gray-100 rounded px-2 py-1 flex space-x-2">
@@ -34,7 +39,7 @@ const RenameDocPopover: FunctionComponent<Props> = (props) => {
         <input
           type="text"
           value={toDocId}
-          className="px-2"
+          className="px-2 flex-1"
           onChange={(e) => handleSetToDocId(e.target.value)}
           autoFocus
           required
@@ -53,9 +58,10 @@ const RenameDocPopover: FunctionComponent<Props> = (props) => {
         </button>
         {/*Remove button*/}
         <button
-          className="rounded px-2 py-1 bg-emerald-400 text-white shadow hover:shadow-md hover:bg-emerald-500"
+          className={`rounded px-2 py-1 text-white shadow hover:shadow-md hover:bg-emerald-600 ${error !== undefined ? "bg-emerald-200" : "bg-emerald-500"}`}
+          disabled={error !== undefined}
           onClick={() => {
-            if (!error) {
+            if (!error && toDocId !== props.docId) {
               props.hidePopover();
               renameDoc(props.docId, toDocId);
             }
