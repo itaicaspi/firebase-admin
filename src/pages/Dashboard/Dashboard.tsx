@@ -7,7 +7,7 @@ import {
   getDeepObjectPropByPath,
   getDocIdFromPath,
   initOrPushToArray,
-  isTimestamp, normalizeJson,
+  isTimestamp, loadExtraInfoPropsForPath, normalizeJson,
   normalizeTimestamps
 } from "../../helpers/utils";
 import FirestorePath from "./FirestorePath";
@@ -59,6 +59,7 @@ const Dashboard: FunctionComponent<Props> = (props) => {
     setDocFilter((docFilter) => docFilter === newDocFilter ? undefined : newDocFilter)
   }
 
+
   const handleSetPath = async (path: string, force?: boolean, newExtraInfoProps?: {[key: string]: Array<string>}) => {
     let searchParams = newExtraInfoProps ?? extraInfoProps
     if (path !== currentPath || force) {
@@ -67,7 +68,7 @@ const Dashboard: FunctionComponent<Props> = (props) => {
 
         // navigating to a new collection requires resetting the extra info props so that it won't filter
         // the docs according to props that don't exist
-        setExtraInfoProps({})
+        setExtraInfoProps(loadExtraInfoPropsForPath(path))
         searchParams = {}
       } else {
         // doc
@@ -103,7 +104,7 @@ const Dashboard: FunctionComponent<Props> = (props) => {
     }
 
     // parse query params
-    let newExtraInfoProps: {[key: string]: Array<string>} = getSearchParams()
+    const newExtraInfoProps = loadExtraInfoPropsForPath(defaultPath)
     setExtraInfoProps(newExtraInfoProps)
 
     handleSetPath(defaultPath);
@@ -217,9 +218,9 @@ const Dashboard: FunctionComponent<Props> = (props) => {
 
 
   return (
-    <section className="flex justify-center flex-col items-center">
+    <section className="flex justify-start flex-col items-center h-screen">
       <ImagePreview/>
-      <div className="container mt-4 flex flex-col">
+      <div className="container mt-4 flex flex-col flex-1">
         <div className="flex justify-between">
           <h2 className="text-xl font-semibold flex items-center space-x-2">
             <img src="/favicon.png" alt="" className="w-8 h-8"/>
@@ -327,7 +328,7 @@ const Dashboard: FunctionComponent<Props> = (props) => {
         </div>
 
         {/*Doc content*/}
-        <div className="flex flex-col relative mt-4 pb-10">
+        <div className="flex flex-col relative mt-4 pb-10 flex-1">
           <ExtendedCodeEditor
             onSave={handleSaveDoc}
             originalContent={beautifiedContent}

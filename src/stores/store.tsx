@@ -4,7 +4,7 @@ import {addDoc, collection, deleteDoc, doc, onSnapshot, setDoc,} from "firebase/
 import {
   getCollectionIdFromPath,
   getCollectionPathFromPath,
-  getDocIdFromPath,
+  getDocIdFromPath, loadExtraInfoPropsForPath,
   replaceTimestamps
 } from "../helpers/utils";
 import {toast} from "react-hot-toast";
@@ -106,7 +106,7 @@ const useStore = create((
       const newCollectionPath = pathComponents.length % 2 === 1 ? currentPath : pathComponents.slice(0, -1).join("/")
       if (get().currentCollectionPath !== newCollectionPath) {
         get().setSortByProp(undefined);
-        get().setExtraInfoProps({})
+        get().setExtraInfoProps(loadExtraInfoPropsForPath(currentPath))
       }
 
       // get path data
@@ -118,13 +118,18 @@ const useStore = create((
           currentDoc: []
         })
         get().fetchCollection(currentPath, (result: any) => {
-          console.log("fetch collection")
+          console.log("fetch collection", currentPath)
+          const currentDocId = getDocIdFromPath(currentPath);
+          // if (currentDocId in result) {
+          //   get().setCurrentDoc(result[currentDocId])
+          // } else {
           const firstDocId = Object.keys(result)[0]
           get().setCurrentDoc(result[firstDocId])
           if (currentPath.split("/").length % 2 === 1) {
             currentPath = `${currentPath}/${firstDocId}`
           }
           set({currentPath});
+          // }
           resolve(currentPath)
         })
         get().setCurrentCollectionPath(currentPath)
@@ -296,10 +301,7 @@ const useStore = create((
       get().setCurrentCollection(newCollection)
     })
   },
-  cloneDoc: (fromDocId: string, toDocId: string) => {
-    const collectionPath = get().currentCollectionPath;
-    const fromDocPath = `${collectionPath}/${fromDocId}`;
-    const toDocPath = `${collectionPath}/${toDocId}`;
+  cloneDoc: (fromDocPath: string, toDocPath: string) => {
     toast.promise(
       cloneDoc(fromDocPath, toDocPath),
       {

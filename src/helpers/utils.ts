@@ -1,4 +1,5 @@
 import {Timestamp} from "firebase/firestore";
+import {getSearchParams} from "./useCustomSearchParams";
 
 export const normalizeJson = (sortingFunction?: any) => {
   return (key: string, value: any) => {
@@ -74,16 +75,28 @@ export const getDeepObjectPropByPath = (object: any, path: string) : any => {
 //   return JSON.stringify(obj, allKeys, space);
 // }
 
-export const getCollectionPathFromPath = (path: string) => {
+export const getPathComponents = (path: string) => {
   if (path.startsWith("/")) path = path.slice(1)
-  const pathComponents = path.split("/")
+  if (path.endsWith("/")) path = path.slice(0, path.length - 1)
+  return path.split("/");
+}
+
+export const isCollectionPath = (path: string) => {
+  return getPathComponents(path).length % 2 === 1;
+}
+
+export const isDocumentPath = (path: string) => {
+  return getPathComponents(path).length % 2 === 0;
+}
+
+export const getCollectionPathFromPath = (path: string) => {
+  const pathComponents = getPathComponents(path)
   const collectionPartIndex = Math.floor((pathComponents.length - 1) / 2) * 2
   return pathComponents.slice(0, collectionPartIndex + 1).join("/")
 }
 
 export const getCollectionIdFromPath = (path: string) => {
-  if (path.startsWith("/")) path = path.slice(1)
-  const pathComponents = path.split("/")
+  const pathComponents = getPathComponents(path)
   const collectionPartIndex = Math.floor((pathComponents.length - 1) / 2) * 2
   return pathComponents[collectionPartIndex]
 }
@@ -108,3 +121,12 @@ export const initOrPushToArray = (value: any, initialArray?: Array<any>) => {
 }
 
 export const unique = (arr: Array<any>) => Array.from(new Set(arr));
+
+
+export const loadExtraInfoPropsForPath = (path: string) => {
+  let newExtraInfoProps: {[key: string]: Array<string>} = getSearchParams()
+  if (Object.keys(newExtraInfoProps).length === 0) {
+    newExtraInfoProps = JSON.parse(localStorage.getItem(getCollectionIdFromPath(path)) ?? "{}")
+  }
+  return newExtraInfoProps
+}

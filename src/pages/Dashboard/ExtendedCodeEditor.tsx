@@ -82,7 +82,7 @@ const ExtendedCodeEditor: FunctionComponent<Props> = (props) => {
 
 
   return (
-    <div className="flex flex-col relative">
+    <div className="flex flex-col relative flex-1">
       {
         editedContent !== originalContent && (
           <div className="absolute top-4 right-6 bg-white rounded z-10 px-4 py-2 flex items-center space-x-2">
@@ -144,6 +144,7 @@ const ExtendedCodeEditor: FunctionComponent<Props> = (props) => {
         name="UNIQUE_ID_OF_DIV"
         editorProps={{ $blockScrolling: true }}
         width={"100%"}
+        height={"100%"}
         ref={editorRef}
       />
     </div>
