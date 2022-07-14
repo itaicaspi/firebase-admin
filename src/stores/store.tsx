@@ -25,6 +25,8 @@ export interface StoreInterface extends State {
   setCurrentPath: (currentPath: string) => Promise<string>
   currentCollectionPath: string
   setCurrentCollectionPath: (currentCollectionPath: string) => void
+  updateCollectionData: (data: any) => Promise<string>
+  updateParentCollections: (currentPath: string) => void
   currentDoc: any
   setCurrentDoc: (currentDoc: any) => void
   currentCollection: any
@@ -73,34 +75,52 @@ const useStore = create((
     });
     set({unsubscribe})
   },
+  updateCollectionData: async (data: any) : Promise<string> => {
+    let currentPath = get().currentPath
+    // const currentDocId = getDocIdFromPath(currentPath);
+    //   get().setCurrentDoc(result[currentDocId])
+    // } else {
+    const firstDocId = Object.keys(data)[0]
+    get().setCurrentDoc(data[firstDocId])
+    if (currentPath.split("/").length % 2 === 1) {
+      currentPath = `${currentPath}/${firstDocId}`
+    }
+    set({currentPath});
+    return currentPath;
+  },
+  updateParentCollections: async (currentPath: string) => {
+    const pathComponents = currentPath.split("/");
+    if (get().currentParentCollections.length === 0) {
+      // fetch all the subcollections along the current path
+      let parentCollections = [];
+      for (let i = 0; i < pathComponents.length; i += 2) {
+        let docPath = pathComponents.slice(0, i).join("/");
+        let subCollections = await fetchCollections(docPath)
+        parentCollections.push(subCollections)
+      }
+      set({currentParentCollections: parentCollections});
+    } else {
+      // update parent collections
+      const requiredCollectionDepth = Math.max(1, Math.ceil(pathComponents.length / 2));
+      const currentCollectionDepth = get().currentParentCollections.length;
+      let relevantParentCollections;
+      if (requiredCollectionDepth > currentCollectionDepth) {
+        relevantParentCollections = [...get().currentParentCollections, get().currentSubCollections];
+      } else {
+        relevantParentCollections = get().currentParentCollections.slice(0, Math.ceil(pathComponents.length / 2));
+      }
+      set({
+        currentParentCollections: relevantParentCollections,
+      })
+    }
+  },
   currentPath: "",
   setCurrentPath: async (currentPath: string) : Promise<string> => {
+    set({currentPath});
     return new Promise(async (resolve, reject) => {
       // get root collections
       const pathComponents = currentPath.split("/");
-      if (get().currentParentCollections.length === 0) {
-        // fetch all the subcollections along the current path
-        let parentCollections = [];
-        for (let i = 0; i < pathComponents.length; i += 2) {
-          let docPath = pathComponents.slice(0, i).join("/");
-          let subCollections = await fetchCollections(docPath)
-          parentCollections.push(subCollections)
-        }
-        set({currentParentCollections: parentCollections});
-      } else {
-        // update parent collections
-        const requiredCollectionDepth = Math.max(1, Math.ceil(pathComponents.length / 2));
-        const currentCollectionDepth = get().currentParentCollections.length;
-        let relevantParentCollections;
-        if (requiredCollectionDepth > currentCollectionDepth) {
-          relevantParentCollections = [...get().currentParentCollections, get().currentSubCollections];
-        } else {
-          relevantParentCollections = get().currentParentCollections.slice(0, Math.ceil(pathComponents.length / 2));
-        }
-        set({
-          currentParentCollections: relevantParentCollections,
-        })
-      }
+      get().updateParentCollections(currentPath)
 
       // check for collection change
       const newCollectionPath = pathComponents.length % 2 === 1 ? currentPath : pathComponents.slice(0, -1).join("/")
@@ -117,21 +137,11 @@ const useStore = create((
           currentCollection: {},
           currentDoc: []
         })
-        get().fetchCollection(currentPath, (result: any) => {
-          console.log("fetch collection", currentPath)
-          const currentDocId = getDocIdFromPath(currentPath);
-          // if (currentDocId in result) {
-          //   get().setCurrentDoc(result[currentDocId])
-          // } else {
-          const firstDocId = Object.keys(result)[0]
-          get().setCurrentDoc(result[firstDocId])
-          if (currentPath.split("/").length % 2 === 1) {
-            currentPath = `${currentPath}/${firstDocId}`
-          }
-          set({currentPath});
-          // }
-          resolve(currentPath)
-        })
+        get().fetchCollection(
+          currentPath,
+          (result) =>
+              get().updateCollectionData(result).then(() => resolve(currentPath))
+        );
         get().setCurrentCollectionPath(currentPath)
         get().setCurrentDoc([])
         get().setCurrentSubCollections([])
