@@ -115,7 +115,9 @@ const Dashboard: FunctionComponent<Props> = (props) => {
   const scrollCurrentDocIntoView = () => {
     setTimeout(() => {
       const docId = getDocIdFromPath(currentPath)
-      document.getElementById(docId)?.scrollIntoView({block: "nearest", inline: "nearest", behavior: "smooth"})
+      if (docId !== null) {
+        document.getElementById(docId!)?.scrollIntoView({block: "nearest", inline: "nearest", behavior: "smooth"})
+      }
     }, 500)
   }
 

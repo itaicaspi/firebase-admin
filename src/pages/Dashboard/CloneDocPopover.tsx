@@ -11,7 +11,7 @@ interface OwnProps {
 type Props = OwnProps;
 
 const CloneDocPopover: FunctionComponent<Props> = (props) => {
-  const [toDocId, setToDocId] = useState("");
+  const [toDocId, setToDocId] = useState(props.docId);
   const [toCollectionPath, setToCollectionPath] = useState(props.collectionPath);
   const [cloneDoc, currentCollection] = useStore(store => [store.cloneDoc, store.currentCollection])
   const [docError, setDocError] = useState<string | undefined>(undefined);

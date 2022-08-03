@@ -77,13 +77,18 @@ const useStore = create((
   },
   updateCollectionData: async (data: any) : Promise<string> => {
     let currentPath = get().currentPath
-    // const currentDocId = getDocIdFromPath(currentPath);
+    const currentDocId = getDocIdFromPath(currentPath);
     //   get().setCurrentDoc(result[currentDocId])
     // } else {
-    const firstDocId = Object.keys(data)[0]
-    get().setCurrentDoc(data[firstDocId])
+    const collectionDocIds = Object.keys(data);
+    let newDocId = currentDocId;
+    if (newDocId == null || !collectionDocIds.includes(newDocId)) {
+      newDocId = collectionDocIds[0];
+    }
+
+    get().setCurrentDoc(data[newDocId])
     if (currentPath.split("/").length % 2 === 1) {
-      currentPath = `${currentPath}/${firstDocId}`
+      currentPath = `${currentPath}/${newDocId}`
     }
     set({currentPath});
     return currentPath;
@@ -254,6 +259,7 @@ const useStore = create((
   },
   removeDoc: (docPath: string) => {
     const docId = getDocIdFromPath(docPath);
+    if (docId === null) return;
     toast.promise(
       removeDoc(
         docPath,
@@ -265,7 +271,7 @@ const useStore = create((
       }
     ).then(() => {
       const newCollection = {...get().currentCollection};
-      delete newCollection[docId];
+      delete newCollection[docId!];
       if (Object.keys(newCollection).length === 0) {
         const pathComponents = get().currentPath.split("/");
         let newPathComponents = pathComponents.slice(0, pathComponents.length - 2)

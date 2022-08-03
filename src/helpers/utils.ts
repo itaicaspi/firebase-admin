@@ -103,7 +103,8 @@ export const getCollectionIdFromPath = (path: string) => {
 
 export const getDocIdFromPath = (path: string) => {
   const pathComponents = path.split("/")
-  return pathComponents[pathComponents.length - 1];
+  if (pathComponents.length % 2 !== 0) return null;
+  return pathComponents.at(-1);
 }
 
 export const getLeafIdFromPath = (path: string) => {

@@ -133,7 +133,7 @@ const ExtendedCodeEditor: FunctionComponent<Props> = (props) => {
       }
 
       <AceEditor
-        className="w-full h-full pb-10 rounded-lg pr-10"
+        className="w-full h-full rounded-lg"
         mode="json"
         theme="monokai"
         value={editedContent}
@@ -144,7 +144,7 @@ const ExtendedCodeEditor: FunctionComponent<Props> = (props) => {
         name="UNIQUE_ID_OF_DIV"
         editorProps={{ $blockScrolling: true }}
         width={"100%"}
-        height={"100%"}
+        // height={"100%"}
         ref={editorRef}
       />
     </div>
